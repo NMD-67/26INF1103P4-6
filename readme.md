@@ -60,6 +60,7 @@ project/
 |   |---auth.py           //Handles user CRUD (Create, Read, Update, Delete)
 |   |---ai_manager.py     //Handles API calls to AI systems
 |   |---logic_manager.py  //Handles user matching based on AI results
+|   |---email.py          //Email service for auth
 |---cli/
 |   |---main.py           //The file to run the app via CLI
 |---tele/
@@ -100,7 +101,7 @@ project/
 This file contans all the functions and modules for user handling. Note that as the functions require updating of the database, all the functions are asynchronious. The functions are as such:
 | Function | Parameters | Return | Remarks |
 |---|---|---|---|
-|Login | student_id `int` | emailSent `bool` | Checks if studentID is valid and sends an email to the student email. Returns true if email is sent. |
+|Login | student_id `int` | status `int` | Returns a [http status](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) depending on the progress of the login |
 |GetUserInfo | student_id `int` | User JSON `object` | Returns all the info on a user based on their studentID |
 |UpdateUserInfo | student_id `int` | status `int` | Returns a [http status](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) depending on the progress of the update |
 |DeleteUser | student_id `int`| status `int` | Returns a [http status](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status) depending on the progress of the deletion |
