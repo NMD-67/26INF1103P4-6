@@ -1,26 +1,54 @@
 # The auth handler for our app; responsible for handling user auth actions
 
 from src.email import send_email
+from database.db import upload_otp, check_otp, delete_otp
+import random
 
+def is_valid_student_id(student_id):
+  return (student_id.isnumeric() and len(str(student_id)) == 7)
 
 async def login_user(student_id):
   print(f"Attempting to log in user with student_id: {student_id}")
-  print(f"Type of student_id: {type(student_id)}")
+
   # Ensure student_id is the correct format
-  if(not student_id.isnumeric() or len(str(student_id)) != 7):
+  if(not is_valid_student_id(student_id)):
     return 400 
+  
   # If valid, generate an OTP and send it to the user's email
   email = f"{student_id}@sit.singaporetech.edu.sg"
-  opt = "123456"  # Replace with actual OTP generation
-  response = await send_email(to_email=email, subject="Your OTP for Login", html_content="Your OTP is: " + opt)  # Replace with actual OTP generation logic
-  print(f"Email send response: {response is None}")
+  otp = create_otp(student_id)  
+  if otp is None:
+    return 500
+  response = await send_email(to_email=email, subject="Your OTP for Login", html_content=f"Your OTP is: {otp}")  
+  print(f"Email send response: {response}")
   if response is None:
     print(f"Failed to send email for student_id: {student_id}. Response: {response}")
     return 500  # Error sending email
   else:
     return 200  # Email sent successfully
-  # If invalid, return an error response
-  return
+
+def create_otp(student_id):
+  print("Creating otp")
+  if not is_valid_student_id(student_id):
+    return 400
+  else:
+    # Check if otp alr exists
+    res = check_otp(student_id)
+
+    # Delete otp if alr exist
+    if res.row is not None:
+      delete_otp(res.row)
+
+    # Generate new OTP
+    otp = random.randrange(1, 9999)
+    result = upload_otp(student_id=student_id, otp=otp)
+    print("result: ", result)
+    if result == 200:
+      return otp
+    else:
+      print("An error creating otp: " + result)
+      return None
+
 
 def validate_otp(student_id, otp):
   # Validate the OTP sent to the user's email

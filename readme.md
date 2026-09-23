@@ -77,7 +77,7 @@ project/
 {
   student_id: int,
   name: str,
-  birthday: int/datetime, #datetime is a class; need to check if can use
+  birthday: int/datetime,
   gender: str,
   year: int,
   course: str,
