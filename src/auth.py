@@ -54,11 +54,13 @@ def create_otp(student_id):
 
 def validate_otp(student_id, otp):
   # Validate the OTP sent to the user's email
+  print(f'Validating OTP for {student_id}')
   if not is_valid_student_id(student_id=student_id):
     return 400
 
   user_row_result = get_otp(student_id)
-  if user_row_result["otp"] is None:
+  print(f'validate otp user_row_result {user_row_result}')
+  if not isinstance(user_row_result, dict):
     return user_row_result
   correct_otp = user_row_result["otp"]
   verified = correct_otp == otp

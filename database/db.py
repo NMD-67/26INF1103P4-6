@@ -95,9 +95,11 @@ def get_otp(student_id):
 def delete_otp(row_numbers):
   try:  
     print(f'Row numbers {row_numbers}')
+    i = 0
     for row_number in row_numbers:
       print(f"Deleting otp row {row_number}")
-      res = otp_sheet.delete_rows(row_number)
+      res = otp_sheet.delete_rows(row_number - i)
+      i += 1
       print(res)
     return 200
   except Exception as e:
@@ -132,6 +134,7 @@ def add_user(**fields):
 def update_user(student_details):
     try:
         student_id = student_details.get("student_id")
+        print(f'Updating user: {student_details}')
         original_user = get_user(student_id)
         if original_user is not None:
             for key, value in student_details.items():
