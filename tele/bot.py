@@ -46,6 +46,9 @@ async def otp(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if result == 200:
         await update.message.reply_text("OTP verified!")
         return
+    if result == 201:
+        await update.message.reply_text("Account Created!")
+        return
     if result == 400:
         await update.message.reply_text("Invalid student ID. Please try again.")
     elif result == 403:

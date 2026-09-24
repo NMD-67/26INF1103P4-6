@@ -28,6 +28,9 @@ def column_name_exists(worksheet, column_name):
         return True
 
 def get_row_numbers_by_column_name(worksheet, column_name, value):
+    """
+    Used to get all the rows where the column value matches the given value
+    """
     headers = get_header_values(sheet=worksheet)
     if column_name not in headers:
         return {"success": False, "error": f"Column name {column_name} not found"}
@@ -53,7 +56,19 @@ def get_cell_value(worksheet, row_number, column_name):
     value = worksheet.cell(row_number, col_index).value
     return {"success": True, "value": value}
 
-def get_row_value(worksheet, row_numbers):
+def delete_row(worksheet: gspread.Worksheet, row_number):
+    print(f'Deleting row {row_number} from {worksheet}')
+    try:
+        worksheet.delete_rows(row_number)
+        return 200
+    except Exception as e:
+        print(f'An error occured deleting row: {e}')
+        
+
+def get_row_values(worksheet, row_numbers):
+  """
+  Returns an array of row value arrays
+  """
   values = []
   for row_number in row_numbers:
     headers = get_header_values(worksheet)
@@ -83,7 +98,7 @@ def get_otp(student_id):
       print(f"User row number: {user_row_number}")
       if not user_row_number["success"]:
           return 500
-      user_row = get_row_value(otp_sheet, user_row_number["rows"])
+      user_row = get_row_values(otp_sheet, user_row_number["rows"])
       if user_row is None or len(user_row) < 1:
           return 404
       print(user_row)
@@ -94,7 +109,7 @@ def get_otp(student_id):
 
 def delete_otp(row_numbers):
   try:  
-    print(f'Row numbers {row_numbers}')
+    print(f'Delting otp {row_numbers}')
     i = 0
     for row_number in row_numbers:
       print(f"Deleting otp row {row_number}")
@@ -109,25 +124,32 @@ def delete_otp(row_numbers):
 
 
 # ---User Functions---
-async def get_user(student_id):
+def get_user(student_id):
+    print(f'Getting user: {student_id}')
     try:
-        user = await user_sheet.find(student_id)
-        return user
+        user = user_sheet.find(student_id)
+        user_rows = get_row_values(user_sheet, [user.row])
+
+        if len(user_rows) < 1:
+            return {"success": False, "error": "User not found!", "status": 404}
+
+        user = user_rows[0]
+        return {"success": True, "user": user}
     except gspread.exceptions.CellNotFound:
-        return None
+        return {"success": False, "error": "User not found!"}
 
 def add_user(**fields):
     """
     fields: any combination of column_name=value, e.g.
         add_user(student_id="676767", name="Alice", bio="hi")
     """
-    if "student_id" not in fields or "name" not in fields:
+    if "student_id" not in fields:
         return 400
     try:
         headers = user_sheet.row_values(1)  # actual column order in the sheet
         row = [fields.get(h, "") for h in headers]  # build row matching sheet's real column order
         user_sheet.append_row(row)
-        return 200
+        return 201
     except Exception as e:
         return 500
 
@@ -160,5 +182,18 @@ def update_user(student_details):
         print(f"Error updating user: {e}")
     return 500
 
+def delete_user(student_id):
+    try:  
+      print(f"Deleting student {student_id}")
+      row_number = get_row_numbers_by_column_name(user_sheet, "student_id", student_id)
+
+      res = otp_sheet.delete_rows(row_number[0])
+      print(res)
+      return 200
+    except Exception as e:
+        print(f"Error deleting otp row {row_number}: {e}")
+        return 500
+
 # get_otp("2603197")
-#get_row_value(otp_sheet, 2)
+#get_row_values(otp_sheet, 2)
+# get_user("2603197")

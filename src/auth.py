@@ -1,7 +1,7 @@
 # The auth handler for our app; responsible for handling user auth actions
 
 from src.email import send_email
-from database.db import upload_otp, get_otp, delete_otp
+from database.db import upload_otp, get_otp, delete_otp, get_user, add_user
 import random
 
 def is_valid_student_id(student_id):
@@ -69,15 +69,29 @@ def validate_otp(student_id, otp):
   else:
     print(f'validation success! user row: {user_row_result}')
     delete_otp(user_row_result["row_numbers"])
+
+    #Check if user exist
+    user_info = get_user_info(student_id)
+    if user_info["status"] == 404:
+      result = add_user(student_id=student_id)
+      return result
+    #IF user not exist, create user
     return 200
   
   # If valid, log the user in and return a success response
   # If invalid, return an error response
 
 def get_user_info(student_id):
+  """
+  Returns an object {
+  success: bool,
+  error: str,
+  user: List
+  }
+  """
   # Retrieve user information based on the student_id
-  # Return user details if found, else return an error response
-  return
+  user = get_user(student_id=student_id)
+  return user
 
 def edit_user_info(student_id, new_info):
   # Update user information based on the student_id and new_info provided
