@@ -72,7 +72,7 @@ def validate_otp(student_id, otp):
 
     #Check if user exist
     user_info = get_user_info(student_id)
-    if user_info["status"] == 404:
+    if  user_info.get("status") == 404:
       result = add_user(student_id=student_id)
       return result
     #IF user not exist, create user

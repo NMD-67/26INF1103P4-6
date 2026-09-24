@@ -15,6 +15,7 @@ client = gspread.authorize(creds)
 sheet = client.open("SITogether")
 user_sheet = sheet.worksheet("users")
 otp_sheet = sheet.worksheet("otp")
+bot_sheet = sheet.worksheet("bot_users")
 
 def get_header_values(sheet):
     headers = sheet.row_values(1)
@@ -121,19 +122,46 @@ def delete_otp(row_numbers):
       print(f"Error deleting otp row {row_number}: {e}")
       return 500
 
+# ---Bot Functions---
+def save_user(tele_id, student_id):
+    # Check if user alr exists
+    cell = bot_sheet.find(str(tele_id))
+    if cell:
+        bot_sheet.update_cell(cell.row, 2, student_id)
+    else:
+        bot_sheet.append_row([tele_id, student_id])
 
+def get_bot_user(tele_id):
+    cell = bot_sheet.find(str(tele_id))
+    if(cell):
+        row = bot_sheet.row_values(cell.row)
+        student_id = row[1]
+        return {"tele_id": tele_id, "student_id": student_id}
+    return None
 
 # ---User Functions---
 def get_user(student_id):
+    """
+    Returns a response dict {
+    "success": bool,
+    "status": int,
+    "error": str,
+    "user": dict
+    }
+    """
     print(f'Getting user: {student_id}')
     try:
         user = user_sheet.find(student_id)
+
+        if user is None:
+            return {"success": False, "error": "User not found!", "status": 404}
         user_rows = get_row_values(user_sheet, [user.row])
 
         if len(user_rows) < 1:
             return {"success": False, "error": "User not found!", "status": 404}
 
         user = user_rows[0]
+        
         return {"success": True, "user": user}
     except gspread.exceptions.CellNotFound:
         return {"success": False, "error": "User not found!"}
@@ -196,4 +224,4 @@ def delete_user(student_id):
 
 # get_otp("2603197")
 #get_row_values(otp_sheet, 2)
-# get_user("2603197")
+#print(get_user("2676767"))
