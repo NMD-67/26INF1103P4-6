@@ -5,7 +5,7 @@ from pathlib import Path
 import os
 
 
-from src.auth import login_user
+from src.auth import login_user, validate_otp
 
 BASE_DIR = Path(__file__).resolve().parent
 load_dotenv(dotenv_path=BASE_DIR.parent / ".env")
@@ -31,11 +31,40 @@ async def login(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif response == 500:
         await update.message.reply_text("Error occurred while sending OTP. Please try again later.")
     else:
-        await update.message.reply_text("An OTP has been sent to your email. Please check your inbox.")
+        await update.message.reply_text("An OTP has been sent to your email. Please check your inbox. \nEnter OTP using the /otp command:\n/otp <student_id> <otp>")
+
+async def otp(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if len(context.args) != 2:
+        await update.message.reply_text("Usage: /otp <student_id> <otp>")
+        return
+
+    student_id = context.args[0]
+    otp = context.args[1]
+
+    result = validate_otp(student_id=student_id, otp=otp)
+    print(f"opt res {result}")
+    if result == 200:
+        await update.message.reply_text("OTP verified!")
+        return
+    elif result == 403:
+        await update.message.reply_text("Invalid OTP!")
+        return
+    elif result == 404:
+        await update.message.reply_text("Error! OTP not found")
+        return
+    elif result == 500:
+        await update.message.reply_text("A server error! Contact @nmd_002 for help")
+        return
+    else:
+        await update.message.reply_text("An unknown error! Contact @nmd_002 for help")
+        return
+
+
 
 app = ApplicationBuilder().token(os.environ.get("TELE_API_KEY")).build()
 app.add_handler(CommandHandler("start", start))
 app.add_handler(CommandHandler("login", login))
+app.add_handler(CommandHandler("otp", otp))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
 
 app.run_polling()

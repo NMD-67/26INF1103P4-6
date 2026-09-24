@@ -1,7 +1,7 @@
 # The auth handler for our app; responsible for handling user auth actions
 
 from src.email import send_email
-from database.db import upload_otp, check_otp, delete_otp
+from database.db import upload_otp, get_otp, delete_otp
 import random
 
 def is_valid_student_id(student_id):
@@ -33,11 +33,13 @@ def create_otp(student_id):
     return 400
   else:
     # Check if otp alr exists
-    res = check_otp(student_id)
+    res = get_otp(student_id)
+
+    print(f"get otp res {res}")
 
     # Delete otp if alr exist
-    if res.row is not None:
-      delete_otp(res.row)
+    if isinstance(res, dict) and res["row_numbers"] is not None:
+      delete_otp(res["row_numbers"])
 
     # Generate new OTP
     otp = random.randrange(1, 9999)
@@ -52,9 +54,23 @@ def create_otp(student_id):
 
 def validate_otp(student_id, otp):
   # Validate the OTP sent to the user's email
+  if not is_valid_student_id(student_id=student_id):
+    return 400
+
+  user_row_result = get_otp(student_id)
+  if user_row_result["otp"] is None:
+    return user_row_result
+  correct_otp = user_row_result["otp"]
+  verified = correct_otp == otp
+  if not verified:
+    return 403
+  else:
+    print(f'validation success! user row: {user_row_result}')
+    delete_otp(user_row_result["row_numbers"])
+    return 200
+  
   # If valid, log the user in and return a success response
   # If invalid, return an error response
-  return
 
 def get_user_info(student_id):
   # Retrieve user information based on the student_id

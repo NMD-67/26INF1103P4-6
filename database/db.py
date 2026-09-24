@@ -27,16 +27,20 @@ def column_name_exists(worksheet, column_name):
     else:
         return True
 
-def get_row_number_by_column_name(worksheet, column_name, value):
+def get_row_numbers_by_column_name(worksheet, column_name, value):
     headers = get_header_values(sheet=worksheet)
     if column_name not in headers:
         return {"success": False, "error": f"Column name {column_name} not found"}
     col_index = headers.index(column_name) + 1
     col_values = worksheet.col_values(col_index)
 
+    matching_rows = [
+        i + 1 for i, v in enumerate(col_values)
+        if v == value and i != 0
+    ]
+
     try:
-      row_number = col_values.index(value) + 1
-      return {"success": True, "row": row_number}
+      return {"success": True, "rows": matching_rows}
     except ValueError:
         return {"success": False, "error": f'Value {value} not found in column'}
 
@@ -49,13 +53,18 @@ def get_cell_value(worksheet, row_number, column_name):
     value = worksheet.cell(row_number, col_index).value
     return {"success": True, "value": value}
 
-def get_row_value(worksheet, row_number):
+def get_row_value(worksheet, row_numbers):
+  values = []
+  for row_number in row_numbers:
     headers = get_header_values(worksheet)
     row_values = worksheet.row_values(row_number)
 
     row_values += [""] * (len(headers) - len(row_values))
 
-    return dict(zip(headers, row_values))
+    print(row_values)
+    values.append(dict(zip(headers, row_values)))
+
+  return values
 
 # ---OTP Functions---
 def upload_otp(student_id, otp):
@@ -68,26 +77,32 @@ def upload_otp(student_id, otp):
         print(f"An error occured when creating otp: {e}")
         return 500
 
-def check_otp(student_id):
+def get_otp(student_id):
     try:
-      user = otp_sheet.find(student_id)
-      print(user.row)
-      if user is None:
+      user_row_number = get_row_numbers_by_column_name(otp_sheet, "student_id", student_id)
+      print(f"User row number: {user_row_number}")
+      if not user_row_number["success"]:
+          return 500
+      user_row = get_row_value(otp_sheet, user_row_number["rows"])
+      if user_row is None or len(user_row) < 1:
           return 404
-      return user
+      print(user_row)
+      return {"row_numbers": user_row_number["rows"], "otp": user_row[0]["otp"]}
     except Exception as e:
         print(f"An error occured when checking otp: {e}")
         return 500
 
-def delete_otp(row_number):
-    print(f"Deleting otp row {row_number}")
-    try:
+def delete_otp(row_numbers):
+  try:  
+    print(f'Row numbers {row_numbers}')
+    for row_number in row_numbers:
+      print(f"Deleting otp row {row_number}")
       res = otp_sheet.delete_rows(row_number)
       print(res)
-      return 200
-    except Exception as e:
-        print(f"Error deleting otp row {row_number}")
-        return 500
+    return 200
+  except Exception as e:
+      print(f"Error deleting otp row {row_number}: {e}")
+      return 500
 
 
 
@@ -141,3 +156,6 @@ def update_user(student_details):
     except Exception as e:
         print(f"Error updating user: {e}")
     return 500
+
+# get_otp("2603197")
+#get_row_value(otp_sheet, 2)
