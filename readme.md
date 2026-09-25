@@ -96,6 +96,10 @@ project/
 }
 ```
 
+##### How to add user as JSON
+
+Go to `/database/db` and scroll to the bottom. There is an example of how it can be done. Simply replace the `student_json` object with the one you wanna import.
+
 #### auth.py
 
 This file contans all the functions and modules for user handling. Note that as the functions require updating of the database, all the functions are asynchronious. The functions are as such:
