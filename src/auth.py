@@ -97,3 +97,7 @@ def edit_user_info(student_id, new_info):
   # Update user information based on the student_id and new_info provided
   # Return a success response if updated, else return an error response
   return
+
+def delete_user(student_id):
+  #TODO
+  return

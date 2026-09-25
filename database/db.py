@@ -2,6 +2,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import os
 import datetime
+import json
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SERVICE_ACCOUNT_FILE = os.path.join(BASE_DIR, "service_account.json")
@@ -175,10 +176,23 @@ def add_user(**fields):
         return 400
     try:
         headers = user_sheet.row_values(1)  # actual column order in the sheet
-        row = [fields.get(h, "") for h in headers]  # build row matching sheet's real column order
-        user_sheet.append_row(row)
+
+        row = []  # build row matching sheet's real column order
+        for column in headers:
+            value = fields.get(column, "") #Get the value at the column, default ""
+            if isinstance(value, (list, dict)):
+                value = json.dumps(value)
+            row.append(value)
+
+        # Check if user exists
+        user_result = get_user(fields["student_id"])
+        if user_result["success"]: 
+            return 401
+        res = user_sheet.append_row(row)
+        print(f"res: {res}")
         return 201
     except Exception as e:
+        print(f"Error when adding user: {e}")
         return 500
 
 def update_user(student_details):
@@ -225,3 +239,5 @@ def delete_user(student_id):
 # get_otp("2603197")
 #get_row_values(otp_sheet, 2)
 #print(get_user("2676767"))
+student_json = {"student_id": "234567", "name": ["bhbhbh", "kkkk"]}
+print(add_user(**student_json))
